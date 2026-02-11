@@ -21,7 +21,7 @@ import tensorflow as tf
 
 def load_musa_plugin():
   """Load the MUSA plugin library."""
-  plugin_path = "/workspace/tensorflow_musa_extension/build/libmusa_plugin.so"
+  plugin_path = "/workspace/tensorflow_musa/build/libmusa_plugin.so"
   if os.path.exists(plugin_path):
     try:
       tf.load_library(plugin_path)

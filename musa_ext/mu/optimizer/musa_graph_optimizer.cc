@@ -505,9 +505,8 @@ class MusaGraphOptimizer : public CustomGraphOptimizer {
         continue;
       }
       if (IsFusionPatternDisabled(pattern->GetName())) {
-        VLOG(1) << "MusaGraphOptimizer: Fusion pattern '"
-                << pattern->GetName() << "' disabled by "
-                << kDisabledFusionPatternsParam;
+        VLOG(1) << "MusaGraphOptimizer: Fusion pattern '" << pattern->GetName()
+                << "' disabled by " << kDisabledFusionPatternsParam;
         continue;
       }
       priority_groups[pattern->GetPriority()].push_back(pattern);
@@ -642,8 +641,8 @@ class MusaGraphOptimizer : public CustomGraphOptimizer {
     size_t token_begin = 0;
     while (token_begin <= disabled_patterns.size()) {
       const size_t token_end = disabled_patterns.find(',', token_begin);
-      const string token = NormalizeFusionPatternName(disabled_patterns.substr(
-          token_begin, token_end - token_begin));
+      const string token = NormalizeFusionPatternName(
+          disabled_patterns.substr(token_begin, token_end - token_begin));
 
       if (!token.empty()) {
         if (token == "all") {

@@ -21,9 +21,9 @@ limitations under the License.
 #include <unordered_set>
 #include <vector>
 
-#include "mu/graph_fusion/fusion_pattern_manager.h"
-#include "mu/graph_fusion/gelu_fusion.h"
-#include "mu/graph_fusion/layernorm_fusion.h"
+#include "kernels/fusion/fusion_pattern_manager.h"
+#include "kernels/fusion/gelu_fusion.h"
+#include "kernels/fusion/layernorm_fusion.h"
 #include "mu/optimizer/graph_utils.h"
 #include "tensorflow/core/framework/attr_value.pb.h"
 #include "tensorflow/core/framework/graph.pb.h"

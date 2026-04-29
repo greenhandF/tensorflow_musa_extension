@@ -74,5 +74,4 @@ __all__ = [
     "clear_musa_disabled_fusion_patterns",
     "get_musa_disabled_fusion_patterns",
     "set_musa_allow_growth",
->>>>>>> Stashed changes
 ]

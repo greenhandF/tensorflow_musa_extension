@@ -157,9 +157,8 @@ void MusaDeviceContext::CopyCPUTensorToDevice(const Tensor* cpu_tensor,
       MUSA_TELEMETRY_ON_MEMCPY(dst, const_cast<void*>(src), bytes, device_id,
                                MUSA_TELEMETRY_STREAM_ID(stream_handle_),
                                TelemetryEventType::kMemcpyH2D);
-      musaError_t err =
-          musaMemcpyAsync(dst, src, bytes, musaMemcpyHostToDevice,
-                          stream_handle_);
+      musaError_t err = musaMemcpyAsync(dst, src, bytes, musaMemcpyHostToDevice,
+                                        stream_handle_);
       if (err != musaSuccess) {
         done(errors::Internal(
             "MUSA pinned H2D async copy on compute stream failed"));
@@ -242,9 +241,8 @@ void MusaDeviceContext::CopyCPUTensorToDevice(const Tensor* cpu_tensor,
       MUSA_TELEMETRY_ON_MEMCPY(dst, bounce_buffer, bytes, device_id,
                                MUSA_TELEMETRY_STREAM_ID(stream_handle_),
                                TelemetryEventType::kMemcpyH2D);
-      musaError_t err =
-          musaMemcpyAsync(dst, bounce_buffer, bytes, musaMemcpyHostToDevice,
-                          stream_handle_);
+      musaError_t err = musaMemcpyAsync(dst, bounce_buffer, bytes,
+                                        musaMemcpyHostToDevice, stream_handle_);
       if (err != musaSuccess) {
         LOG(ERROR) << "MUSA H2D async copy on compute stream failed: "
                    << musaGetErrorString(err) << " dst=" << dst
@@ -252,8 +250,7 @@ void MusaDeviceContext::CopyCPUTensorToDevice(const Tensor* cpu_tensor,
                    << " stream=" << stream_handle_;
         musa_dev->pinned_memory_pool()->FreeAsync(bounce_buffer, bytes,
                                                   nullptr);
-        done(errors::Internal(
-            "MUSA H2D async copy on compute stream failed"));
+        done(errors::Internal("MUSA H2D async copy on compute stream failed"));
         return;
       }
 
@@ -346,8 +343,9 @@ void MusaDeviceContext::CopyDeviceTensorToCPU(const Tensor* device_tensor,
       musaEventDestroy(compute_done_event);
       return errors::Internal("MUSA D2H sync event record failed");
     }
-    MUSA_TELEMETRY_ON_EVENT_RECORD(
-        compute_done_event, MUSA_TELEMETRY_STREAM_ID(stream_handle_), device_id);
+    MUSA_TELEMETRY_ON_EVENT_RECORD(compute_done_event,
+                                   MUSA_TELEMETRY_STREAM_ID(stream_handle_),
+                                   device_id);
 
     err = musaStreamWaitEvent(d2h_stream_, compute_done_event, 0);
     if (err != musaSuccess) {
@@ -454,15 +452,16 @@ void MusaDeviceContext::CopyDeviceTensorToCPU(const Tensor* device_tensor,
     // completes
     TensorReference input_ref(*device_tensor);
     if (event_mgr_) {
-      event_mgr_->ThenExecute(d2h_stream_, [musa_dev, device_id, dst,
-                                            bounce_buffer, bytes, done, input_ref]() {
-        musaSetDevice(device_id);
-        std::memcpy(dst, bounce_buffer, bytes);
-        musa_dev->pinned_memory_pool()->FreeAsync(bounce_buffer, bytes,
-                                                  nullptr);
-        input_ref.Unref();
-        done(Status::OK());
-      });
+      event_mgr_->ThenExecute(
+          d2h_stream_,
+          [musa_dev, device_id, dst, bounce_buffer, bytes, done, input_ref]() {
+            musaSetDevice(device_id);
+            std::memcpy(dst, bounce_buffer, bytes);
+            musa_dev->pinned_memory_pool()->FreeAsync(bounce_buffer, bytes,
+                                                      nullptr);
+            input_ref.Unref();
+            done(Status::OK());
+          });
     } else {
       musaStreamSynchronize(d2h_stream_);
       std::memcpy(dst, bounce_buffer, bytes);

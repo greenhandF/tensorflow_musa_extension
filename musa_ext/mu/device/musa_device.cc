@@ -474,7 +474,8 @@ void MusaDeviceContext::CopyDeviceTensorToCPU(const Tensor* device_tensor,
 
 MusaDevice::MusaDevice(Env* env, const DeviceAttributes& attributes,
                        int device_id,
-                       ::stream_executor::StreamExecutor* executor)
+                       ::stream_executor::StreamExecutor* executor,
+                       bool allow_growth)
     : Device(env, attributes), device_id_(device_id) {
   musaSetDevice(device_id_);
 
@@ -494,7 +495,8 @@ MusaDevice::MusaDevice(Env* env, const DeviceAttributes& attributes,
 
   VLOG(1) << ">>> [MUSA] Device " << device_id_
           << " total_memory=" << total_memory << " free_memory=" << free_memory
-          << " bfc_memory_limit=" << bfc_memory_limit;
+          << " bfc_memory_limit=" << bfc_memory_limit
+          << " allow_growth=" << allow_growth;
 
   // Create main compute stream
   musaError_t stream_err = musaStreamCreate(&stream_);
@@ -562,20 +564,19 @@ MusaDevice::MusaDevice(Env* env, const DeviceAttributes& attributes,
                                           executor, event_mgr_);
 
   // Use TensorFlow's official BFCAllocator with MusaSubAllocator
-  // Note: allow_growth=false to pre-allocate a large chunk upfront
+  // allow_growth is configured by the MUSA runtime configuration helpers.
   // garbage_collection=true to reclaim unused memory
   // bfc_memory_limit was calculated at the start of constructor BEFORE
   // any streams/handles were created, to capture the true available memory.
-  musa_allocator_ = new BFCAllocator(new MusaSubAllocator(device_id_, {}, {}),
-                                     bfc_memory_limit,
-                                     false,  // allow_growth
-                                     "Musa_BFC_Allocator",
-                                     true  // garbage_collection
-  );
+  musa_allocator_ =
+      new BFCAllocator(new MusaSubAllocator(device_id_, {}, {}),
+                       bfc_memory_limit, allow_growth, "Musa_BFC_Allocator",
+                       true  // garbage_collection
+      );
 
   VLOG(1) << ">>> [MUSA] Device " << device_id_
           << " using official TF BFCAllocator with bfc_memory_limit="
-          << bfc_memory_limit << " bytes";
+          << bfc_memory_limit << " bytes allow_growth=" << allow_growth;
 
   // Initialize Host Pinned Memory Allocator (BFCAllocator - kept for
   // compatibility)

@@ -416,7 +416,7 @@ class MusaSubAllocator : public SubAllocator {
     }
   }
 
-  bool SupportsCoalescing() const override { return true; }
+  bool SupportsCoalescing() const override { return false; }
 
  private:
   int device_id_;
